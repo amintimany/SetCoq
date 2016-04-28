@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # The help menu
 function print_short_help {
     echo "usage: setCoq.sh [-s directory] [-h]"
