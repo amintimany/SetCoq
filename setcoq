@@ -2,12 +2,12 @@
 
 # The help menu
 function print_short_help {
-    echo "usage: setCoq.sh [-s directory] [-h]"
+    echo "usage: setcoq [-s directory] [-h]"
     echo "use --help or -h option for more details"
 }
 
 function print_help {
-    echo "usage: setCoq.sh [-s directory] [-u] [-h]"
+    echo "usage: setcoq [-s directory] [-u] [-h]"
     echo "Description:"
     echo "  --set directory, -s directory"
     echo "    Set Coq to the given directory."
@@ -78,6 +78,8 @@ function setCoq {
 	    ln -s ${f} ${targ}
 	fi
     done
+    # done setting Coq
+    echo "Coq is now set to: ${COQP}"
 }
 
 
