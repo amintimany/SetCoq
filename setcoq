@@ -65,18 +65,17 @@ function setCoq {
     fi
 
     for f in $1/bin/*; do
-	if [ -f $f ]; then
-	    targ=/usr/local/$(echo $f | sed "s|$1/||g")
-	    if [ -f ${targ} ]; then
-		if ! [ -L ${targ} ]; then
-		    echo "Coq is permanently installed! Please remove first."
-		    exit 1
-		else
-		    rm ${targ}
-		fi
-	    fi
-	    ln -s ${f} ${targ}
-	fi
+      if [ -f $f ]; then
+        targ=/usr/local/$(echo $f | sed "s|$1/||g")
+        if [ -L ${targ} ]; then
+          rm ${targ}
+        fi
+        if [ -f ${targ} ]; then
+          echo "Coq is permanently installed! Please remove first."
+          exit 1
+        fi
+        ln -s ${f} ${targ}
+      fi
     done
     # done setting Coq
     echo "Coq is now set to: ${COQP}"
