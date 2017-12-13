@@ -2,17 +2,23 @@
 
 # The help menu
 function print_short_help {
-    echo "usage: setcoq [-s directory] [-u directory] [-h]"
+    echo "usage: setcoq [-s directory] [-u directory] [-ss] [-su] [-w] [-h]"
     echo "use --help or -h option for more details"
 }
 
 function print_help {
-    echo "usage: setcoq [-s directory] [-u] [-h]"
+    echo "usage: setcoq [-s directory] [-u directory] [-h]"
     echo "Description:"
     echo "  --set directory, -s directory"
     echo "    Set Coq to the given directory."
     echo "  --unset directory, -u directory"
     echo "    Unset Coq set by this script from the given directory."
+    echo "  --which, -w"
+    echo "    Display the path to the version of Coq that is currently set."
+    echo "  --selfset, -ss"
+    echo "    Set this script so it can be accessed from anywhere."
+    echo "  --selfunset, -su"
+    echo "    UnSet this script if it is set before."
     echo "  --help, -h \n"
     echo "    To print this help."
 }
@@ -27,7 +33,12 @@ fi
 #initializing the options
 ISSET=0
 ISUNSET=0
+ISSELFSET=0
+ISSELFUNSET=0
+ISWHICH=0
 PTH=
+SELFPATH=`realpath $0`
+PERMSETPATH="/usr/local/bin/setcoq"
 
 # see if the requested operation is to set Coq or unset it
 while [[ $# > 0 ]]; do
@@ -41,6 +52,15 @@ while [[ $# > 0 ]]; do
             ISUNSET=1
             PTH=$2
             shift 2;;
+        --which|-w)
+            ISWHICH=1
+            shift 1;;
+        --selfset|-ss)
+            ISSELFSET=1
+            shift 1;;
+        --selfunset|-su)
+            ISSELFUNSET=1
+            shift 1;;
 	--help|-h)
 	    print_help
 	    exit 0;;
@@ -53,7 +73,8 @@ while [[ $# > 0 ]]; do
 done
 
 # We remove the last / if the argument ends in a /
-if [ ${PTH: -1} == "/" ]; then
+
+if [ "${PTH: -1}" == "/" ]; then
     COQP=${PTH:0:`expr ${#PTH} - 1`}
 else
     COQP=${PTH}
@@ -144,10 +165,57 @@ function unsetCoq {
 
 
 # if the request is to set Coq we set it.
-if [ ${ISSET} == 1 -a ${ISUNSET} == 0 ]; then
+if [ ${ISSET} == 1 -a ${ISUNSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
     setCoq ${COQP}
-fi
-
-if [ ${ISUNSET} == 1 -a ${ISSET} == 0 ]; then
+elif [ ${ISUNSET} == 0 -a ${ISUNSET} == 1 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
     unsetCoq ${COQP}
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 1 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
+    if [ -L "${PERMSETPATH}" ]; then
+	while true; do
+	    echo "The file ${PERMSETPATH} already exists and is a symlink to \"$(readlink ${PERMSETPATH})\""
+	    read -p "Are you sure you want to continue?" yn
+	    case $yn in
+		[Yy]* )
+		    rm ${PERMSETPATH}
+		    ln -s ${SELFPATH} ${PERMSETPATH}
+		    echo "Self set was successful. Use \"setcoq\" to run this script from anywhere!"
+		    break;;
+		[Nn]* ) exit 0;;
+		* ) echo "Please answer yes or no.";;
+	    esac
+	done
+    elif [ -e "${PERMSETPATH}" ]; then
+	echo "The file ${PERMSETPATH} already exists and is not a symlink!"
+	exit 1
+    else
+	rm -f ${PERMSETPATH}
+	ln -s ${SELFPATH} ${PERMSETPATH}
+	echo "Self set was successful. Use \"setcoq\" to run this script from anywhere!"
+    fi
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 1 -a ${ISWHICH} == 0 ]; then
+    if [ -L "${PERMSETPATH}" ]; then
+	rm "${PERMSETPATH}"
+    elif [ -e "${PERMSETPATH}" ]; then
+	echo "The file ${PERMSETPATH} already exists and is not a symlink!"
+	exit 1
+    else
+	rm -f ${PERMSETPATH}
+	ln -s ${SELFPATH} ${PERMSETPATH}
+	echo "Self set was successful. Use \"setcoq\" to run this script from anywhere!"
+    fi
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 1 ]; then
+    COQCPATH=`which coqc`
+    COQCDIR=`dirname $COQCPATH`
+    if [ -z "${COQCPATH}" ]; then
+	echo "Coq is not installed!"
+    elif [ -L ${COQCPATH} ]; then
+    	TARGETCOQCPATH=$(readlink ${COQCPATH})
+	TARGETCOQCDIR=`dirname $(dirname $TARGETCOQCPATH)`
+	echo "Coq is set to \"$TARGETCOQCDIR\"."
+    else
+	echo "Coq is permanently installed in $COQCDIR."
+    fi
+else
+    echo "Mixing options is not valid!"
+    exit 1
 fi
