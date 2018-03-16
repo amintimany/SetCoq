@@ -19,7 +19,7 @@ function print_help {
     echo "    Set this script so it can be accessed from anywhere."
     echo "  --selfunset, -su"
     echo "    UnSet this script if it is set before."
-    echo "  --help, -h \n"
+    echo "  --help, -h"
     echo "    To print this help."
 }
 
