@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # The help menu
 function print_short_help {
