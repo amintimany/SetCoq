@@ -15,6 +15,8 @@ function print_help {
     echo "    Unset Coq set by this script from the given directory."
     echo "  --which, -w"
     echo "    Display the path to the version of Coq that is currently set."
+    echo "  --bare-which, -bw"
+    echo "    Same as --which and -w but just prints the path."
     echo "  --selfset, -ss"
     echo "    Set this script so it can be accessed from anywhere."
     echo "  --selfunset, -su"
@@ -36,6 +38,7 @@ ISUNSET=0
 ISSELFSET=0
 ISSELFUNSET=0
 ISWHICH=0
+ISBAREWHICH=0
 PTH=
 SELFPATH=`realpath $0`
 PERMSETPATH="/usr/local/bin/setcoq"
@@ -54,6 +57,9 @@ while [[ $# > 0 ]]; do
             shift 2;;
         --which|-w)
             ISWHICH=1
+            shift 1;;
+        --bare-which|-bw)
+            ISBAREWHICH=1
             shift 1;;
         --selfset|-ss)
             ISSELFSET=1
@@ -165,11 +171,11 @@ function unsetCoq {
 
 
 # if the request is to set Coq we set it.
-if [ ${ISSET} == 1 -a ${ISUNSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
+if [ ${ISSET} == 1 -a ${ISUNSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 -a ${ISBAREWHICH} == 0 ]; then
     setCoq ${COQP}
-elif [ ${ISUNSET} == 0 -a ${ISUNSET} == 1 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
+elif [ ${ISUNSET} == 0 -a ${ISUNSET} == 1 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 -a ${ISBAREWHICH} == 0 ]; then
     unsetCoq ${COQP}
-elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 1 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 ]; then
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 1 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 -a ${ISBAREWHICH} == 0 ]; then
     if [ -L "${PERMSETPATH}" ]; then
 	while true; do
 	    echo "The file ${PERMSETPATH} already exists and is a symlink to \"$(readlink ${PERMSETPATH})\""
@@ -192,7 +198,7 @@ elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 1 -a ${ISSELFUNSET} =
 	ln -s ${SELFPATH} ${PERMSETPATH}
 	echo "Self set was successful. Use \"setcoq\" to run this script from anywhere!"
     fi
-elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 1 -a ${ISWHICH} == 0 ]; then
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 1 -a ${ISWHICH} == 0 -a ${ISBAREWHICH} == 0 ]; then
     if [ -L "${PERMSETPATH}" ]; then
 	rm "${PERMSETPATH}"
     elif [ -e "${PERMSETPATH}" ]; then
@@ -203,17 +209,31 @@ elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} =
 	ln -s ${SELFPATH} ${PERMSETPATH}
 	echo "Self set was successful. Use \"setcoq\" to run this script from anywhere!"
     fi
-elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 1 ]; then
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 1 -a ${ISBAREWHICH} == 0 ]; then
     COQCPATH=`which coqc`
     COQCDIR=`dirname $COQCPATH`
     if [ -z "${COQCPATH}" ]; then
 	echo "Coq is not installed!"
+	exit 1
     elif [ -L ${COQCPATH} ]; then
     	TARGETCOQCPATH=$(readlink ${COQCPATH})
 	TARGETCOQCDIR=`dirname $(dirname $TARGETCOQCPATH)`
 	echo "Coq is set to \"$TARGETCOQCDIR\"."
     else
 	echo "Coq is permanently installed in $COQCDIR."
+    fi
+elif [ ${ISUNSET} == 0 -a ${ISSET} == 0 -a ${ISSELFSET} == 0 -a ${ISSELFUNSET} == 0 -a ${ISWHICH} == 0 -a ${ISBAREWHICH} == 1 ]; then
+    COQCPATH=`which coqc`
+    COQCDIR=`dirname $COQCPATH`
+    if [ -z "${COQCPATH}" ]; then
+	echo "Coq is not installed!"
+	exit 1
+    elif [ -L ${COQCPATH} ]; then
+    	TARGETCOQCPATH=$(readlink ${COQCPATH})
+	TARGETCOQCDIR=`dirname $(dirname $TARGETCOQCPATH)`
+	echo $TARGETCOQCDIR
+    else
+	echo $COQCDIR
     fi
 else
     echo "Mixing options is not valid!"
